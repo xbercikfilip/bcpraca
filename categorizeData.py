@@ -9,10 +9,10 @@ realisticNames = ["abstract", "realistic"]
 modernNames = ["classic", "modern"]
 minimalisticNames = ["complex", "minimalistic"]
 
-happyModel = load_model("icHappyModel")
-realisticModel = load_model("icRealisticModel")
-modernModel = load_model("icModernModel")
-minimalisticModel = load_model("icMinimalisticModel")
+happyModel = load_model("happyModel.keras")
+realisticModel = load_model("realisticModel.keras")
+modernModel = load_model("modernModel.keras")
+minimalisticModel = load_model("minimalisticModel.keras")
 
 n= 516
 img_array = np.random.random((n,180,180,3))
@@ -30,14 +30,11 @@ minimalisticPredictions = minimalisticModel.predict(img_array)
 predictions = [happyPredictions, realisticPredictions, modernPredictions, minimalisticPredictions]
 results = np.random.random((n,4))
 
-
 for i in range(n):
-
     results[i][0] = str(np.argmax(tf.nn.softmax(predictions[0][i])))
     results[i][1] = str(np.argmax(tf.nn.softmax(predictions[1][i])))
     results[i][2] = str(np.argmax(tf.nn.softmax(predictions[2][i])))
-    results[i][3] =  str(np.argmax(tf.nn.softmax(predictions[3][i])))
-    
+    results[i][3] =  str(np.argmax(tf.nn.softmax(predictions[3][i])))    
     
 print(results)
 df = pd.DataFrame(results, columns=['sad', 'realistic', 'modern', 'minimalistic'])

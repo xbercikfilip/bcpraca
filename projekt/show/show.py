@@ -1,16 +1,10 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import tensorflow as tf
 
 from tensorflow import keras
-from keras import layers
-from keras.models import Sequential
-from sklearn.metrics import mean_absolute_error, mean_squared_error, confusion_matrix, precision_recall_curve, auc
+from keras import layers, Sequential
 from sklearn.model_selection import train_test_split
-
-
 
 def show(user, userData, imagesData):
   METRICS = [
@@ -20,7 +14,6 @@ def show(user, userData, imagesData):
       keras.metrics.MeanAbsoluteError(name='mae')
     ] 
     
-
   df1 = userData[user]
   df1.index = df1.index - 1 
   df2 = imagesData 
@@ -41,14 +34,12 @@ def show(user, userData, imagesData):
   x_train = dataset[['sad', 'realistic', 'minimalistic', 'modern']].values
   y_train = dataset[user].values
 
-
   model = Sequential([
       layers.Dense(64, activation='relu', input_shape=(4,)),
       layers.Dense(32, activation='relu'),
       layers.Dense(16, activation='relu'),
       layers.Dense(1, activation='sigmoid')
   ])
-
 
   model.compile(optimizer='adam', loss=keras.losses.BinaryCrossentropy(), metrics=METRICS)
               
@@ -63,7 +54,6 @@ def show(user, userData, imagesData):
     class_weight=class_weight,
   )
   return model, history
-
 
 def get_top_n_keys(sorted_items, n=100):
     top_n_keys = [key for key, _ in sorted_items[:n]]
@@ -130,7 +120,6 @@ def getRecommendations(likedImages, mode):
     y_true = transformed_table[targetUser].values
     y_pred = (predictions > 0.75).astype(int)
     
-    plot_evaluation_metrics(history, y_true, y_pred, sorted_values) 
      """
     return get_top_n_keys(results), liked_array
 
@@ -151,74 +140,3 @@ def cosine_similarity(vector_a, vector_b):
     if magnitude_a == 0 or magnitude_b == 0:
         return 0 
     return dot_product / (magnitude_a * magnitude_b)
-
-
-def plot_evaluation_metrics(history, y_true, y_pred, sorted_ratings, threshold=0.5):
-    # Plot Training and Validation Loss
-    plt.figure(figsize=(12, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.title('Training and Validation Loss')
-    plt.legend()
-
-    # Plot Training and Validation Accuracy
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history['accuracy'], label='Training Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.title('Training and Validation Accuracy')
-    plt.legend()
-    plt.show()
-    # Calculate MAE and RMSE
-    mae = mean_absolute_error(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-
-    # Plot MAE and RMSE
-    plt.figure(figsize=(10, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['mae'], label='MAE')
-    plt.xlabel('Epochs')
-    plt.ylabel('MAE')
-    plt.title('Mean Absolute Error (MAE)')
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history['rmse'], label='RMSE')
-    plt.xlabel('Epochs')
-    plt.ylabel('RMSE')
-    plt.title('Root Mean Squared Error (RMSE)')
-    plt.legend()
-    plt.show()
-  
-    """
-    # Plot Confusion Matrix
-    plt.figure(figsize=(6, 6))
-    cm = confusion_matrix(y_true, y_pred > threshold)
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
-    plt.title('Confusion Matrix')
-    plt.xlabel('Predicted Labels')
-    plt.ylabel('True Labels')
-    #plt.show()
-
-   
-
-  # Calculate the cumulative distribution function
-    sorted_ratings = np.sort(sorted_ratings)
-    cdf = np.arange(1, len(sorted_ratings) + 1) / len(sorted_ratings)
-    # Plot the CDF of ratings
-    plt.figure(figsize=(8, 6))
-    plt.plot(sorted_ratings, cdf, marker='o', linestyle='-')
-    plt.xlabel('Rating')
-    plt.ylabel('Cumulative Probability')
-    plt.title('Cumulative Distribution Function (CDF) of Ratings')
-    plt.grid(True)
-    plt.show()
-    ,73,92,93,124,145,170,196,203,208,261,288,310,340,342,343,365,367,420,424,455,478,479,480"""
-
-
-#print(getRecommendations([3,5,7,10,23,51], "content"))
-

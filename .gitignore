@@ -7,3 +7,5 @@ projekt/modern/testPhotos
 projekt/realistic/photos
 projekt/realistic/testPhotos
 projekt/base
+__pycache__
+show/__pycache__

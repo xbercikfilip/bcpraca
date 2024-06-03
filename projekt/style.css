@@ -1,0 +1,63 @@
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+
+    margin: auto;
+  }
+
+  .image {
+    padding-top: 5px;
+    margin: auto;
+    height: 10em;
+    width: 10rem;
+  }
+
+  .custom-slider {
+    width: 20%;
+    margin: auto;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .modal-dialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    height: 100vh;
+  }
+  .modal-dialog .modal-body {
+    padding: 0;
+  }
+  .modal-dialog .modal-body img {
+    max-width: 50%;
+    max-height: 50%;
+    object-fit: contain;
+  }
+  .image-container {
+    text-align: center;
+    border: 1px solid #000000;
+    margin: 5px;
+    padding: 0px;
+    position: relative;
+    display: inline-block;
+    height: 12rem; /* Adjusted height to fit content */
+  }
+
+  .image-container.liked {
+    border-width: 3px; /* Increased border thickness for liked photos */
+    padding: 3px; /* Adjusted padding to maintain layout */
+  }
+  .like-icon {
+    position: absolute;
+    bottom: 2px; /* Moved down */
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+  }
+  .like-icon.fas {
+    color: red; /* Filled heart icon color */
+  }
+
+  #loadingOverlay {
+    background-color: rgba(0, 0, 0, 0.5); /* Adjust opacity here */
+  }

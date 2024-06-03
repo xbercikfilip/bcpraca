@@ -6,10 +6,8 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 from keras.models import Sequential
-from sklearn.metrics import mean_absolute_error, mean_squared_error, confusion_matrix, precision_recall_curve, auc
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
-
-
 
 def show(user, userData, imagesData):
   METRICS = [
@@ -18,9 +16,9 @@ def show(user, userData, imagesData):
       keras.metrics.RootMeanSquaredError(name='rmse'),
       keras.metrics.MeanAbsoluteError(name='mae')
     ] 
-    
 
   df1 = userData[user]
+  print(df1)
   df1.index = df1.index - 1 
   df2 = imagesData 
   raw_dataset = pd.concat([df2, df1], axis=1)
@@ -40,14 +38,12 @@ def show(user, userData, imagesData):
   x_train = dataset[['sad', 'realistic', 'minimalistic', 'modern']].values
   y_train = dataset[user].values
 
-
   model = Sequential([
       layers.Dense(64, activation='relu', input_shape=(4,)),
       layers.Dense(32, activation='relu'),
       layers.Dense(16, activation='relu'),
       layers.Dense(1, activation='sigmoid')
   ])
-
 
   model.compile(optimizer='adam', loss=keras.losses.BinaryCrossentropy(), metrics=METRICS)
               
@@ -61,8 +57,8 @@ def show(user, userData, imagesData):
     batch_size=26,
     class_weight=class_weight,
   )
-  model.save("showModel")
   return model, history
+
 def get_top_n_keys(sorted_items, n=100):
     top_n_keys = [key for key, _ in sorted_items[:n]]
     return top_n_keys
@@ -71,15 +67,8 @@ def sort_dict_by_value(input_dict):
     sorted_items = sorted(input_dict.items(), key=lambda x: x[1], reverse=True)
     return sorted_items
 
-def getRecommendations(likedImages, mode, user):
+def getRecommendations(likedImages, mode):
     user_table = pd.read_excel("baseUsers.xlsx")
-
-    split_index = 15
-    train_data = user_table.iloc[:split_index]
-    eval_data = user_table.iloc[split_index:]
-    user_table = train_data
-    eval_user = user
-
     data = {}
     for column in user_table.columns:
       data[column] = user_table[column].tolist()
@@ -87,66 +76,67 @@ def getRecommendations(likedImages, mode, user):
     transformed_table = pd.DataFrame(0, index=range(1,517), columns=user_table.columns)
     for user_column in data:
         transformed_table.loc[data[user_column], user_column] = 1
-    targetUser = user
-    liked_array = list(transformed_table.index[transformed_table["user21"] == 1] - 1)  
+    rmse_train_list = []
+    mae_train_list = []
+    rmse_test_list = []
+    mae_test_list = []
+    for i in range(1, 21):
+        targetUser = "user" + str(i)
+        print("Processing", targetUser)
+        if mode == "hybrid":
+            second = find_similar_user(targetUser, transformed_table)[0]["user"]
+            second = list(transformed_table.index[transformed_table[second] == 1])  
+            third = find_similar_user(targetUser, transformed_table)[1]["user"]
+            third = list(transformed_table.index[transformed_table[third] == 1]) 
+            if targetUser in user_table.columns:
+                userData = user_table[targetUser].values.tolist()
+            print(userData)
+            print(second)
+            print(third)
+            joined_array = userData + second + third
+            data[targetUser] = joined_array
+            transformed_table.loc[data[targetUser], targetUser] = 1
+        categorized_images = pd.read_excel("baseCategorized.xlsx")
+        model, history = show(targetUser, transformed_table, categorized_images)
+        predictions = model.predict(categorized_images)
+        n = len(categorized_images.index.tolist())
+        y_true = transformed_table[targetUser].values
+        y_pred = (predictions > 0.75).astype(int)
 
-    if(mode == "collab"):
-        targetUser = find_similar_user(targetUser, transformed_table)[0]["user"]
-        similar_users = find_similar_user(targetUser, transformed_table)[:2]
-        #print(similar_users)
-        joined_array = []
-        for user in similar_users:
-            for item in data[user["user"]]:
-                if item not in joined_array:
-                    joined_array.append(item - 1)
-        np.random.shuffle(joined_array)
-        #print(joined_array)
-        return joined_array, liked_array
-    
-    elif(mode == "eval"):
-        targetUser = eval_user
-    elif(mode == "hybrid"):
-        second = find_similar_user(targetUser, transformed_table)[0]["user"]
-        second = list(transformed_table.index[transformed_table[second] == 1])  
-        third = find_similar_user(targetUser, transformed_table)[1]["user"]
-        third = list(transformed_table.index[transformed_table[third] == 1]) 
-        if targetUser in user_table.columns:
-            userData = user_table[targetUser].values.tolist()
-        print(userData)
-        print(second)
-        print(third)
-        joined_array = userData + second + third
-        data[user] = joined_array
-        transformed_table.loc[data[user], user] = 1
+        train_rmse = history.history['rmse'][-1]
+        train_mae = history.history['mae'][-1]
+        test_rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+        test_mae = mean_absolute_error(y_true, y_pred)
+        rmse_train_list.append(train_rmse)
+        mae_train_list.append(train_mae)
+        rmse_test_list.append(test_rmse)
+        mae_test_list.append(test_mae)
+        
+        # Following line shows loss and accuracy for each user
+        #plot_evaluation_metrics(history)     
+        
+    plt.figure(figsize=(12, 6))
+    plt.subplot(2, 1, 1)
+    plt.plot(range(1, 21), rmse_train_list, label='Training RMSE', marker='o', color='blue')
+    plt.plot(range(1, 21), rmse_test_list, label='Testing RMSE', marker='o', color='red')
+    plt.xlabel('User')
+    plt.ylabel('Error')
+    plt.title('Training and Testing RMSE for Users 1 to 20')
+    plt.xticks(range(1, 21))
+    plt.grid(True)
+    plt.legend()
 
-    categorized_images = pd.read_excel("baseCategorized.xlsx")
-
-    model, history  = show(targetUser, transformed_table, categorized_images)
-    n = len(categorized_images.index.tolist())
-    predictions = model.predict(categorized_images)
-    results = {}
-    for i in range(n):
-        score = 100*predictions[i][0]
-        results[i] = score  
-    results = sort_dict_by_value(results)
-    """
-    count = 0
-    for key, value in results:
-        print(f"{key}: {value}", end="\t")
-        count += 1
-        if count % 5 == 0:
-            print()
-    """
-    sorted_values = [value for _, value in results]
-    y_true = transformed_table[targetUser].values
-    y_pred = (predictions > 0.75).astype(int)
-    results = get_top_n_keys(results)
-    if eval_user in eval_data.columns:
-        column_values = eval_data[eval_user].values.tolist()
-        count_in_results = sum(1 for value in column_values if value in results)
-    #plot_evaluation_metrics(history, y_true, y_pred, sorted_values)
-    return results, liked_array, column_values, count_in_results
-
+    plt.subplot(2, 1, 2)
+    plt.plot(range(1, 21), mae_train_list, label='Training MAE', marker='o', color='green')
+    plt.plot(range(1, 21), mae_test_list, label='Testing MAE', marker='o', color='orange')
+    plt.xlabel('User')
+    plt.ylabel('Error')
+    plt.title('Training and Testing MAE for Users 1 to 20')
+    plt.xticks(range(1, 21))
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 def find_similar_user(user, data):
     similarities = [
@@ -166,7 +156,7 @@ def cosine_similarity(vector_a, vector_b):
     return dot_product / (magnitude_a * magnitude_b)
 
 
-def plot_evaluation_metrics(history, y_true, y_pred, sorted_ratings, threshold=0.5):
+def plot_evaluation_metrics(history):
     # Plot Training and Validation Loss
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
@@ -186,9 +176,6 @@ def plot_evaluation_metrics(history, y_true, y_pred, sorted_ratings, threshold=0
     plt.title('Training and Validation Accuracy')
     plt.legend()
     plt.show()
-    # Calculate MAE and RMSE
-    mae = mean_absolute_error(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
 
     # Plot MAE and RMSE
     plt.figure(figsize=(10, 4))
@@ -207,46 +194,5 @@ def plot_evaluation_metrics(history, y_true, y_pred, sorted_ratings, threshold=0
     plt.legend()
     plt.show()
   
-    """
-    # Plot Confusion Matrix
-    plt.figure(figsize=(6, 6))
-    cm = confusion_matrix(y_true, y_pred > threshold)
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
-    plt.title('Confusion Matrix')
-    plt.xlabel('Predicted Labels')
-    plt.ylabel('True Labels')
-    #plt.show()
-
-   
-
-  # Calculate the cumulative distribution function
-    sorted_ratings = np.sort(sorted_ratings)
-    cdf = np.arange(1, len(sorted_ratings) + 1) / len(sorted_ratings)
-    # Plot the CDF of ratings
-    plt.figure(figsize=(8, 6))
-    plt.plot(sorted_ratings, cdf, marker='o', linestyle='-')
-    plt.xlabel('Rating')
-    plt.ylabel('Cumulative Probability')
-    plt.title('Cumulative Distribution Function (CDF) of Ratings')
-    plt.grid(True)
-    plt.show()
-    """
-users = []
-
-for i in range(20):
-    break
-    user = "user" + str(i + 1)
-    results, liked_array, column_values, count_in_results = getRecommendations([361, 363, 368, 369, 370, 371, 373], "hybrid", user)
-    
-    user_data = {
-        "user": user,
-        "count_in_results": count_in_results
-    }
-    
-    users.append(user_data)
-print(users)
-getRecommendations([361, 363, 368, 369, 370, 371, 373], "hybrid")
-#print(getRecommendations([101,102,103,104,516,105,106,107,111,112,113,114,121,122,123,124,516,125,136,137,141,142,143,161,152,153,154,356,155,156,177,171,172,173,181,182,183,184,396,195,196,197,191,212,213], "content"))
-#print(getRecommendations([101,102,103,104,516,105,106,107,111,112,113,114,121,122,123,124,
-#                          516,125,136,137,141,142,143,161,152,153,154,356,155,156,177,171,
-#                          172,173,181,182,183,184,396,195,196,197,191,212,213], "hybrid"))
+# Change second parameter to "content" if you want evaluation for content based recommendation
+print(getRecommendations([3,5,7,10,23,51,73,92,93,124,145,170], "content"))
