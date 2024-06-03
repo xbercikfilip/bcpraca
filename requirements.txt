@@ -1,0 +1,8 @@
+flask
+tensorflow
+pandas
+numpy
+keras
+seaborn
+matplotlib
+openpyxl
