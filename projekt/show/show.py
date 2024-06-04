@@ -6,7 +6,6 @@ from tensorflow import keras
 from keras import layers, Sequential
 from sklearn.model_selection import train_test_split
 
-print(tf.verison)
 def show(user, userData, imagesData):
   METRICS = [
       keras.metrics.BinaryAccuracy(name='accuracy'),

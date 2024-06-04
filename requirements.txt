@@ -5,3 +5,4 @@ numpy
 keras
 matplotlib
 openpyxl
+scikit-learn
