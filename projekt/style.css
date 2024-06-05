@@ -40,24 +40,24 @@
     padding: 0px;
     position: relative;
     display: inline-block;
-    height: 12rem; /* Adjusted height to fit content */
+    height: 12rem; 
   }
 
   .image-container.liked {
-    border-width: 3px; /* Increased border thickness for liked photos */
-    padding: 3px; /* Adjusted padding to maintain layout */
+    border-width: 3px; 
+    padding: 3px; 
   }
   .like-icon {
     position: absolute;
-    bottom: 2px; /* Moved down */
+    bottom: 2px; 
     left: 50%;
     transform: translateX(-50%);
     cursor: pointer;
   }
   .like-icon.fas {
-    color: red; /* Filled heart icon color */
+    color: red; 
   }
 
   #loadingOverlay {
-    background-color: rgba(0, 0, 0, 0.5); /* Adjust opacity here */
+    background-color: rgba(0, 0, 0, 0.5); 
   }
